@@ -1,16 +1,30 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Create Supabase client with fallback for build time
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY
+const supabaseUrl = process.env.SUPABASE_URL!
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('SUPABASE_URL and SUPABASE_ANON_KEY must be set in .env.local')
-  throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY must be set')
-}
+// Client with anon key (for client-side - respects RLS)
+export const supabase = createClient(
+  supabaseUrl,
+  process.env.SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  }
+)
 
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Client with service_role key (for server-side API routes - bypasses RLS)
+export const supabaseAdmin = createClient(
+  supabaseUrl,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  }
+)
 
-// Export as db for backward compatibility
-export const db = supabase
+// Export as db for backward compatibility (use admin for server-side)
+export const db = supabaseAdmin
